@@ -254,6 +254,159 @@ textarea {
   min-width: 0;
 }
 
+.app-menu {
+  position: relative;
+  flex: none;
+}
+
+.app-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-width: 250px;
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-paper);
+  box-shadow: 0 12px 32px rgba(27, 39, 51, 0.14);
+}
+
+.app-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font-size: var(--text-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-menu-item:hover:not(:disabled),
+.app-menu-item:focus-visible {
+  background: var(--color-wash);
+  outline: none;
+}
+
+.app-menu-item:disabled {
+  color: var(--color-quiet);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.app-menu-item kbd {
+  color: var(--color-quiet);
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+.app-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--color-line);
+}
+
+.tab-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 34px;
+  padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  background: var(--color-ground);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.doc-tab {
+  display: flex;
+  flex: 0 1 220px;
+  align-items: center;
+  gap: 6px;
+  min-width: 110px;
+  height: 28px;
+  padding: 0 6px 0 12px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  color: var(--color-quiet);
+  font-size: var(--text-ui);
+  cursor: pointer;
+  user-select: none;
+}
+
+.doc-tab:hover {
+  background: color-mix(in srgb, var(--color-wash) 60%, transparent);
+}
+
+.doc-tab.is-active {
+  border-color: var(--color-line);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.doc-tab:focus-visible {
+  outline: 2px solid var(--color-sign);
+  outline-offset: -2px;
+}
+
+.doc-tab-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-tab-dirty {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.doc-tab-close,
+.doc-tab-add {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-quiet);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.doc-tab-add {
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  font-size: 18px;
+}
+
+.doc-tab-close:hover,
+.doc-tab-add:hover {
+  background: var(--color-wash);
+  color: var(--color-ink);
+}
+
 .stage {
   position: relative;
   flex: 1;
@@ -747,6 +900,76 @@ textarea {
   touch-action: none;
 }
 
+.markup-over.is-select {
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.markup-over.is-select .mark-hit,
+.markup-over.is-select .mark-note-wrap {
+  cursor: grab;
+}
+
+.markup-over.is-select .mark-hit:active,
+.markup-over.is-select .mark-note-wrap:active {
+  cursor: grabbing;
+}
+
+.mark-hit,
+.mark-note-wrap {
+  pointer-events: auto;
+  user-select: none;
+}
+
+.mark-hit.is-selected,
+.mark-note-wrap.is-selected {
+  outline: 1.5px solid var(--color-accent);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.mark-handle {
+  position: absolute;
+  z-index: 2;
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-accent);
+  border-radius: 2px;
+  background: #fff;
+  touch-action: none;
+}
+
+.handle-nw {
+  top: -7px;
+  left: -7px;
+  cursor: nwse-resize;
+}
+
+.handle-ne {
+  top: -7px;
+  right: -7px;
+  cursor: nesw-resize;
+}
+
+.handle-sw {
+  bottom: -7px;
+  left: -7px;
+  cursor: nesw-resize;
+}
+
+.handle-se {
+  right: -7px;
+  bottom: -7px;
+  cursor: nwse-resize;
+}
+
+.mark-hit.is-selected > .mark-x {
+  top: -20px;
+  right: 4px;
+  opacity: 1;
+}
+
 .mark-highlight,
 .mark-underline,
 .mark-strike,
@@ -775,7 +998,8 @@ textarea {
 
 .mark-hit > .mark-cover,
 .mark-hit > .mark-stamp,
-.mark-hit > .mark-picture {
+.mark-hit > .mark-picture,
+.mark-hit > .mark-esign {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -829,6 +1053,110 @@ textarea {
   pointer-events: none;
 }
 
+.mark-esign {
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 3px 6px;
+  border: 1px solid var(--color-sign);
+  background: rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+}
+
+.mark-esign-left {
+  display: flex;
+  flex: 0 0 42%;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.mark-esign-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.mark-esign-divider {
+  flex: 0 0 1px;
+  align-self: stretch;
+  margin: 0 8px;
+  background: var(--color-sign);
+}
+
+.mark-esign-right {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.mark-esign-line {
+  color: var(--color-sign);
+  font-family: Helvetica, Arial, sans-serif;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.sign-field-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.sign-field-hit {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 8px;
+  border: 1.5px dashed var(--color-alert);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-alert) 10%, transparent);
+  color: var(--color-alert);
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: sign-field-pulse 1.8s ease-in-out infinite;
+}
+
+.sign-field-hit:hover,
+.sign-field-hit:focus-visible {
+  background: color-mix(in srgb, var(--color-alert) 20%, transparent);
+}
+
+@keyframes sign-field-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-alert) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-alert) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sign-field-hit {
+    animation: none;
+  }
+}
+
 .mark-note {
   width: 18px;
   height: 18px;
@@ -859,6 +1187,8 @@ textarea {
   left: 22px;
   top: 0;
   z-index: 1;
+  min-width: 140px;
+  resize: both;
 }
 
 .mark-x {

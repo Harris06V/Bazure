@@ -11,6 +11,7 @@ import {
 import { createLinkService } from '../../lib/pdf/linkService'
 import { getActiveDocument } from '../../lib/pdf/session'
 import { bindTextSelection } from '../../lib/pdf/textSelection'
+import { useSignFieldStore } from '../../state/signFieldStore'
 import { MarkupLayer } from './MarkupLayer'
 import { CSS_UNITS } from '../../lib/zoom'
 
@@ -140,7 +141,28 @@ export function PageSheet({
           }
 
           const annotations = await page.getAnnotations({ intent: 'display' })
-          if (cancelled || annotations.length === 0) return
+          if (cancelled) return
+
+          const sigFields = annotations
+            .filter((annotation) => annotation.fieldType === 'Sig' && !annotation.fieldValue)
+            .map((annotation) => {
+              const [x1, y1, x2, y2] = annotation.rect
+              const [rx1, ry1] = viewport.convertToViewportPoint(x1, y1)
+              const [rx2, ry2] = viewport.convertToViewportPoint(x2, y2)
+              return {
+                id: String(annotation.id),
+                page: pageNumber,
+                box: {
+                  x: Math.min(rx1, rx2) / viewport.width,
+                  y: Math.min(ry1, ry2) / viewport.height,
+                  w: Math.abs(rx2 - rx1) / viewport.width,
+                  h: Math.abs(ry2 - ry1) / viewport.height,
+                },
+              }
+            })
+          useSignFieldStore.getState().setFieldsForPage(pageNumber, sigFields)
+
+          if (annotations.length === 0) return
           annotationLayer = new AnnotationLayer({
             div: annotationEl,
             accessibilityManager: null,

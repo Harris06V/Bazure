@@ -3,6 +3,9 @@ import type { ToolId } from '../../state/toolStore'
 export function RailIcon({ name }: { name: ToolId }) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      {name === 'select' ? (
+        <path d="M5 3.2 15.5 10l-4.4.9 2.3 4.2-1.8 1-2.3-4.2L6 15.2 5 3.2Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      ) : null}
       {name === 'create' ? (
         <>
           <path d="M6 2.5h5.2L15 6.3V16a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 5 16V4A1.5 1.5 0 0 1 6.5 2.5H6Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />

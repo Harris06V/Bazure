@@ -3,7 +3,7 @@ import { useToolStore } from '../../state/toolStore'
 import { RailIcon } from './icons'
 
 const tools: { id: ToolId; label: string }[] = [
-  { id: 'create', label: 'Create' },
+  { id: 'select', label: 'Select' },
   { id: 'edit', label: 'Edit' },
   { id: 'comment', label: 'Comment' },
   { id: 'stamp', label: 'Stamp' },

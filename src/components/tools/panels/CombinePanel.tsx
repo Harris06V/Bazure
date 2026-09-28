@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { buildPdf } from '../../../lib/pdf/assemble'
 import { isImageName } from '../../../lib/pdf/images'
-import { useViewerStore } from '../../../state/viewerStore'
+import { useTabStore } from '../../../state/tabStore'
 import { useTask } from '../useTask'
 import { ChoiceButton, TaskStatus } from '../ui'
 
@@ -10,7 +10,7 @@ type Piece = { id: string; file: File }
 export function CombinePanel() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [pieces, setPieces] = useState<Piece[]>([])
-  const openBytes = useViewerStore((state) => state.openBytes)
+  const openBytes = useTabStore((state) => state.openInNewTab)
   const { pending, error, run } = useTask()
 
   function move(index: number, delta: number) {

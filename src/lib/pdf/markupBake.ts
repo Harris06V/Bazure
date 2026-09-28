@@ -1,5 +1,6 @@
 import {
   PDFDocument,
+  PDFRef,
   StandardFonts,
   degrees,
   rgb,
@@ -221,11 +222,69 @@ async function drawItem(
     return
   }
 
-  if (item.kind !== 'picture') return
-  const bytes = dataUrlBytes(item.src)
-  const image = item.src.startsWith('data:image/jpeg') ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes)
+  if (item.kind === 'picture') {
+    const bytes = dataUrlBytes(item.src)
+    const image = item.src.startsWith('data:image/jpeg') ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes)
+    const box = pdfBox(viewport, item)
+    page.drawImage(image, { x: box.x, y: box.y, width: box.w, height: box.h })
+    return
+  }
+
+  if (item.kind !== 'esign') return
   const box = pdfBox(viewport, item)
-  page.drawImage(image, { x: box.x, y: box.y, width: box.w, height: box.h })
+  const signColor = hexRgb('#2c6fb0')
+  page.drawRectangle({
+    x: box.x,
+    y: box.y,
+    width: box.w,
+    height: box.h,
+    borderColor: signColor,
+    borderWidth: 1,
+    color: rgb(1, 1, 1),
+    opacity: 0.95,
+  })
+  const padding = 4
+  const leftW = box.w * 0.42
+  if (item.src) {
+    const bytes = dataUrlBytes(item.src)
+    const image = item.src.startsWith('data:image/jpeg') ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes)
+    const availW = leftW - padding * 2
+    const availH = box.h - padding * 2
+    const scale = Math.min(availW / image.width, availH / image.height)
+    const drawW = image.width * scale
+    const drawH = image.height * scale
+    page.drawImage(image, {
+      x: box.x + padding + (availW - drawW) / 2,
+      y: box.y + padding + (availH - drawH) / 2,
+      width: drawW,
+      height: drawH,
+    })
+  }
+  page.drawLine({
+    start: { x: box.x + leftW, y: box.y + 2 },
+    end: { x: box.x + leftW, y: box.y + box.h - 2 },
+    thickness: 1,
+    color: signColor,
+  })
+  const label = winAnsi(regular, `Digitally signed by ${item.name}`)
+  const dateLine = winAnsi(regular, `Date: ${item.timestamp}`)
+  const maxWidth = item.w * (1 - 0.42) * viewport.width - 12
+  let size = Math.max(5, box.h * 0.11)
+  while (size > 4 && regular.widthOfTextAtSize(label, size) > maxWidth) size -= 0.5
+  const textXPx = (item.x + item.w * 0.42) * viewport.width + 8
+  drawUpright(page, viewport, textXPx, (item.y + item.h * 0.4) * viewport.height, label, size, regular, signColor)
+  drawUpright(page, viewport, textXPx, (item.y + item.h * 0.76) * viewport.height, dateLine, size, regular, signColor)
+
+  if (item.fieldId) {
+    const match = /^(\d+)R(\d*)$/.exec(item.fieldId)
+    if (match) {
+      try {
+        page.node.removeAnnot(PDFRef.of(Number(match[1]), match[2] ? Number(match[2]) : 0))
+      } catch {
+        // best effort; the drawn signature still renders even if the empty field widget stays
+      }
+    }
+  }
 }
 
 export async function drawMarkups(bytes: Uint8Array, items: Markup[]) {

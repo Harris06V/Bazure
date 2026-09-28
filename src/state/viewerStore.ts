@@ -12,6 +12,7 @@ import type { PageSize, ReadingMode, ZoomMode } from '../lib/pdf/types'
 import { clampZoom, ZOOM_STEP } from '../lib/zoom'
 import { releaseRetainedDocument, retainBytes } from '../services/documentSource'
 import { useMarkupStore } from './markupStore'
+import { useSignFieldStore } from './signFieldStore'
 import { useToolStore } from './toolStore'
 
 export type ViewerStatus = 'empty' | 'opening' | 'password' | 'ready' | 'error'
@@ -22,6 +23,8 @@ type ViewerState = {
   passwordIncorrect: boolean
   documentId: string | null
   fileName: string | null
+  /** True once a tool has rewritten the document since it was opened or saved. */
+  modified: boolean
   pageCount: number
   pageSizes: PageSize[]
   currentPage: number
@@ -31,7 +34,10 @@ type ViewerState = {
   displayZoom: number
   scrollNonce: number
   openFile: (file: File) => Promise<void>
-  openBytes: (name: string, bytes: Uint8Array) => Promise<void>
+  openBytes: (name: string, bytes: Uint8Array, options?: { modified?: boolean }) => Promise<void>
+  closeDocument: () => void
+  rename: (name: string) => void
+  setModified: (modified: boolean) => void
   submitPassword: (password: string) => void
   goToPage: (page: number) => void
   setCurrentPageFromScroll: (page: number) => void
@@ -106,7 +112,9 @@ async function measurePages(
 
 function resetEdits() {
   useMarkupStore.getState().clear()
+  useSignFieldStore.getState().clear()
   useToolStore.getState().setPlace(null)
+  useToolStore.getState().setSignTarget(null)
 }
 
 export const useViewerStore = create<ViewerState>((set, get) => ({
@@ -115,6 +123,7 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   passwordIncorrect: false,
   documentId: null,
   fileName: null,
+  modified: false,
   pageCount: 0,
   pageSizes: [],
   currentPage: 1,
@@ -124,7 +133,7 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
   displayZoom: 1,
   scrollNonce: 0,
 
-  openBytes: async (name, bytes) => {
+  openBytes: async (name, bytes, options) => {
     cancelOpen()
     destroyActiveDocument()
     releaseRetainedDocument()
@@ -138,6 +147,7 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
       passwordIncorrect: false,
       documentId: retained.id,
       fileName: name,
+      modified: options?.modified ?? true,
       pageCount: 0,
       pageSizes: [],
       currentPage: 1,
@@ -197,8 +207,30 @@ export const useViewerStore = create<ViewerState>((set, get) => ({
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer())
-    await get().openBytes(file.name, bytes)
+    await get().openBytes(file.name, bytes, { modified: false })
   },
+
+  closeDocument: () => {
+    cancelOpen()
+    destroyActiveDocument()
+    releaseRetainedDocument()
+    resetEdits()
+    set({
+      status: 'empty',
+      error: null,
+      passwordIncorrect: false,
+      documentId: null,
+      fileName: null,
+      modified: false,
+      pageCount: 0,
+      pageSizes: [],
+      currentPage: 1,
+    })
+  },
+
+  rename: (name) => set({ fileName: name }),
+
+  setModified: (modified) => set({ modified }),
 
   submitPassword: (password) => {
     if (get().status !== 'password') return

@@ -59,6 +59,7 @@ function markupLabel(item: Markup) {
   if (item.kind === 'cover') return 'Cover'
   if (item.kind === 'stamp') return item.label
   if (item.kind === 'picture') return item.name
+  if (item.kind === 'esign') return `Digitally signed by ${item.name}`
   return 'Mark'
 }
 

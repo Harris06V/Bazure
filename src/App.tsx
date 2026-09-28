@@ -1,12 +1,31 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppShell } from './components/shell/AppShell'
 import { DocumentStage } from './components/viewer/DocumentStage'
+import {
+  cut,
+  deleteSelected,
+  duplicate,
+  openPicker as openFilePicker,
+  paste,
+  print,
+  redo,
+  save,
+  saveAs,
+  toggleFullScreen,
+  undo,
+} from './lib/commands'
+import { useMarkupStore } from './state/markupStore'
+import { anyTabDirty, useTabStore } from './state/tabStore'
 import { useToolStore } from './state/toolStore'
 import { useViewerStore, ZOOM_STEP } from './state/viewerStore'
 
+function reportError(error: unknown) {
+  window.alert(error instanceof Error ? error.message : 'That action failed.')
+}
+
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
-  const openFile = useViewerStore((state) => state.openFile)
+  const openFiles = useTabStore((state) => state.openFiles)
   const status = useViewerStore((state) => state.status)
   const fileName = useViewerStore((state) => state.fileName)
   const currentPage = useViewerStore((state) => state.currentPage)
@@ -30,11 +49,67 @@ export default function App() {
     }
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !isTypingTarget(event.target)) {
-        useToolStore.getState().setPlace(null)
-      }
-      if (isTypingTarget(event.target) || status !== 'ready') return
+      const typing = isTypingTarget(event.target)
       const command = event.metaKey || event.ctrlKey
+      const key = event.key.toLowerCase()
+
+      if (event.key === 'Escape' && !typing) {
+        useToolStore.getState().setPlace(null)
+        useMarkupStore.getState().select(null)
+      }
+      if (typing) return
+
+      if (command && key === 'o') {
+        event.preventDefault()
+        openFilePicker()
+        return
+      }
+      if (command && key === 'l') {
+        event.preventDefault()
+        toggleFullScreen()
+        return
+      }
+      if (status !== 'ready') return
+
+      if (command && key === 's') {
+        event.preventDefault()
+        void (event.shiftKey ? saveAs() : save()).catch(reportError)
+        return
+      }
+      if (command && key === 'p') {
+        event.preventDefault()
+        void print().catch(reportError)
+        return
+      }
+      if (command && key === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) redo()
+        else undo()
+        return
+      }
+      if (command && key === 'y') {
+        event.preventDefault()
+        redo()
+        return
+      }
+      // Only take over copy/cut/paste when a markup is involved; otherwise the browser copies page text.
+      if (command && key === 'c') {
+        if (useMarkupStore.getState().copySelected()) event.preventDefault()
+        return
+      }
+      if (command && key === 'x') {
+        if (cut()) event.preventDefault()
+        return
+      }
+      if (command && key === 'v') {
+        if (paste()) event.preventDefault()
+        return
+      }
+      if (command && key === 'd') {
+        event.preventDefault()
+        duplicate()
+        return
+      }
 
       if (command && (event.key === '=' || event.key === '+')) {
         event.preventDefault()
@@ -52,6 +127,24 @@ export default function App() {
         return
       }
       if (command || event.altKey) return
+
+      if ((event.key === 'Delete' || event.key === 'Backspace') && deleteSelected()) {
+        event.preventDefault()
+        return
+      }
+
+      const step = event.shiftKey ? 0.01 : 0.002
+      const nudge: Record<string, [number, number]> = {
+        ArrowLeft: [-step, 0],
+        ArrowRight: [step, 0],
+        ArrowUp: [0, -step],
+        ArrowDown: [0, step],
+      }
+      const delta = nudge[event.key]
+      if (delta && useMarkupStore.getState().nudgeSelected(delta[0], delta[1])) {
+        event.preventDefault()
+        return
+      }
 
       if (event.key === 'ArrowLeft' || event.key === 'ArrowUp' || event.key === 'PageUp') {
         event.preventDefault()
@@ -115,8 +208,8 @@ export default function App() {
       event.preventDefault()
       dragDepth.current = 0
       setDragging(false)
-      const file = event.dataTransfer?.files[0]
-      if (file) void openFile(file)
+      const files = [...(event.dataTransfer?.files ?? [])]
+      if (files.length > 0) void openFiles(files)
     }
 
     window.addEventListener('dragenter', onDragEnter)
@@ -129,7 +222,16 @@ export default function App() {
       window.removeEventListener('dragleave', onDragLeave)
       window.removeEventListener('drop', onDrop)
     }
-  }, [openFile])
+  }, [openFiles])
+
+  useEffect(() => {
+    function onBeforeUnload(event: BeforeUnloadEvent) {
+      if (!anyTabDirty()) return
+      event.preventDefault()
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [])
 
   function openPicker() {
     inputRef.current?.click()
@@ -142,11 +244,12 @@ export default function App() {
         ref={inputRef}
         type="file"
         accept="application/pdf,.pdf"
+        multiple
         hidden
         onChange={(event) => {
-          const file = event.target.files?.[0]
+          const files = [...(event.target.files ?? [])]
           event.target.value = ''
-          if (file) void openFile(file)
+          if (files.length > 0) void openFiles(files)
         }}
       />
       <AppShell dragging={dragging}>

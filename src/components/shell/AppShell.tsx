@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { ToolPanel } from '../tools/ToolPanel'
 import { ToolRail } from '../tools/ToolRail'
+import { TabBar } from './TabBar'
 import { Toolbar } from './Toolbar'
 
 type AppShellProps = {
@@ -17,6 +18,7 @@ export function AppShell({ sidebar, dragging, children }: AppShellProps) {
   return (
     <div className="shell">
       <Toolbar />
+      <TabBar />
       <div className="workspace">
         <ToolRail />
         <ToolPanel />

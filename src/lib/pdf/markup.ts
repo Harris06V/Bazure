@@ -71,6 +71,31 @@ export type Markup =
       src: string
       name: 'Signature' | 'Image'
     }
+  | {
+      id: string
+      kind: 'esign'
+      page: number
+      x: number
+      y: number
+      w: number
+      h: number
+      src: string
+      name: string
+      timestamp: string
+      fieldId?: string
+    }
+
+export function digitalSignTimestamp(date: Date) {
+  const pad = (value: number) => value.toString().padStart(2, '0')
+  const offsetMinutes = -date.getTimezoneOffset()
+  const sign = offsetMinutes >= 0 ? '+' : '-'
+  const abs = Math.abs(offsetMinutes)
+  const offH = pad(Math.floor(abs / 60))
+  const offM = pad(abs % 60)
+  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(
+    date.getMinutes(),
+  )}:${pad(date.getSeconds())} ${sign}${offH}'${offM}'`
+}
 
 export function markupId() {
   return crypto.randomUUID()

@@ -1,5 +1,8 @@
 import { useRef, useState, type PointerEvent } from 'react'
+import { digitalSignTimestamp, markupId } from '../../../lib/pdf/markup'
 import { workingBytes } from '../../../lib/pdf/markupBake'
+import { useMarkupStore } from '../../../state/markupStore'
+import { useSignFieldStore } from '../../../state/signFieldStore'
 import { useToolStore } from '../../../state/toolStore'
 import { useViewerStore } from '../../../state/viewerStore'
 import { useTask } from '../useTask'
@@ -42,9 +45,33 @@ export function SignPanel() {
   const [typed, setTyped] = useState('')
   const setPlace = useToolStore((state) => state.setPlace)
   const place = useToolStore((state) => state.place)
+  const signTarget = useToolStore((state) => state.signTarget)
+  const setSignTarget = useToolStore((state) => state.setSignTarget)
+  const addMarkup = useMarkupStore((state) => state.add)
+  const markSigned = useSignFieldStore((state) => state.markSigned)
   const openBytes = useViewerStore((state) => state.openBytes)
   const fileName = useViewerStore((state) => state.fileName)
   const { pending, error, run } = useTask()
+
+  function applyEsign(src: string, aspect: number, name: string) {
+    if (signTarget) {
+      addMarkup({
+        id: markupId(),
+        kind: 'esign',
+        page: signTarget.page,
+        ...signTarget.box,
+        src,
+        name,
+        timestamp: digitalSignTimestamp(new Date()),
+        fieldId: signTarget.fieldId,
+      })
+      markSigned(signTarget.fieldId)
+      setSignTarget(null)
+      setPlace(null)
+      return
+    }
+    setPlace({ kind: 'esign', src, aspect, name })
+  }
 
   function point(event: PointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current
@@ -60,13 +87,14 @@ export function SignPanel() {
     const canvas = canvasRef.current
     if (!canvas) return
     const cropped = cropCanvas(canvas)
-    if (!cropped) {
+    const name = typed.trim()
+    if (!cropped || !name) {
       void run('Signature', async () => {
-        throw new Error('Draw or type a signature first.')
+        throw new Error(!cropped ? 'Draw or type a signature first.' : 'Type your name first.')
       })
       return
     }
-    setPlace({ kind: 'picture', ...cropped, name: 'Signature' })
+    applyEsign(cropped.src, cropped.aspect, name)
   }
 
   function useTyped() {
@@ -84,18 +112,15 @@ export function SignPanel() {
     context.fillStyle = '#1B2733'
     context.textBaseline = 'middle'
     context.fillText(name, 12, 54)
-    setPlace({
-      kind: 'picture',
-      src: canvas.toDataURL('image/png'),
-      aspect: canvas.width / canvas.height,
-      name: 'Signature',
-    })
+    applyEsign(canvas.toDataURL('image/png'), canvas.width / canvas.height, name)
   }
 
   return (
     <NeedsPdf>
       <p className="panel-note">
-        Type into form fields on the page. Draw or type a signature, then click the page to place it.
+        {signTarget
+          ? 'This document has a signature field. Draw, type, or upload your signature to sign it.'
+          : 'Type into form fields on the page. Draw or type a signature, then click the page to place it.'}
       </p>
       <canvas
         ref={canvasRef}
@@ -144,8 +169,11 @@ export function SignPanel() {
       </div>
       <label className="size-row">
         <span>Name</span>
-        <input value={typed} onChange={(event) => setTyped(event.target.value)} placeholder="Type a signature" />
+        <input value={typed} onChange={(event) => setTyped(event.target.value)} placeholder="Type your full name" />
       </label>
+      <p className="panel-note">
+        Your name is stamped next to the signature as "Digitally signed by…" with the date and time.
+      </p>
       <ChoiceButton disabled={!typed.trim()} onClick={useTyped}>
         Use typed name
       </ChoiceButton>
@@ -159,6 +187,8 @@ export function SignPanel() {
           event.target.value = ''
           if (!file) return
           void run('Reading signature', async () => {
+            const name = typed.trim()
+            if (!name) throw new Error('Type your name first.')
             const bitmap = await createImageBitmap(file)
             try {
               const canvas = document.createElement('canvas')
@@ -167,12 +197,7 @@ export function SignPanel() {
               const context = canvas.getContext('2d')
               if (!context) throw new Error('Could not read that image.')
               context.drawImage(bitmap, 0, 0)
-              setPlace({
-                kind: 'picture',
-                src: canvas.toDataURL('image/png'),
-                aspect: bitmap.width / bitmap.height,
-                name: 'Signature',
-              })
+              applyEsign(canvas.toDataURL('image/png'), bitmap.width / bitmap.height, name)
             } finally {
               bitmap.close()
             }
@@ -186,7 +211,7 @@ export function SignPanel() {
       >
         Place date
       </ChoiceButton>
-      <MarkupList kinds={['picture', 'text']} />
+      <MarkupList kinds={['picture', 'text', 'esign']} />
       <button
         type="button"
         className="primary-btn panel-go"

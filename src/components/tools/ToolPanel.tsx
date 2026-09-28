@@ -8,11 +8,13 @@ import { CreatePanel } from './panels/CreatePanel'
 import { EditPanel } from './panels/EditPanel'
 import { ExportPanel } from './panels/ExportPanel'
 import { OrganizePanel } from './panels/OrganizePanel'
+import { SelectPanel } from './panels/SelectPanel'
 import { SharePanel } from './panels/SharePanel'
 import { SignPanel } from './panels/SignPanel'
 import { StampPanel } from './panels/StampPanel'
 
 const titles: Record<ToolId, string> = {
+  select: 'Select',
   create: 'Create PDF',
   edit: 'Edit',
   comment: 'Comment',
@@ -39,6 +41,7 @@ export function ToolPanel() {
         </button>
       </div>
       <div className="tool-panel-body">
+        {active === 'select' ? <SelectPanel /> : null}
         {active === 'create' ? <CreatePanel /> : null}
         {active === 'edit' ? <EditPanel /> : null}
         {active === 'comment' ? <CommentPanel /> : null}

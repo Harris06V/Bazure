@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Chevron, MinusIcon, PlusIcon } from '../icons'
+import { AppMenu } from './AppMenu'
 import { ToolButton } from './ToolButton'
 import { useViewerStore, ZOOM_STEP } from '../../state/viewerStore'
 
@@ -39,13 +40,11 @@ export function Toolbar() {
     <div className="toolbar-frame">
       <header className="toolbar">
       <div className="toolbar-start">
+        <AppMenu />
         <div className="brand">
           <img className="brand-mark" src="/favicon.svg" alt="" />
           <h1 className="wordmark">Bazure</h1>
         </div>
-        <ToolButton action onClick={() => openPicker()}>
-          Open
-        </ToolButton>
         {fileName ? (
           <>
             <span className="file-rule" aria-hidden="true" />
@@ -158,8 +157,4 @@ export function Toolbar() {
       ) : null}
     </div>
   )
-}
-
-function openPicker() {
-  document.getElementById('bazure-file')?.click()
 }

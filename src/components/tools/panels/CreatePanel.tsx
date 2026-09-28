@@ -1,13 +1,13 @@
 import { useRef } from 'react'
 import { blankPdf, buildPdf } from '../../../lib/pdf/assemble'
 import { pdfNameFrom } from '../../../lib/pdf/download'
-import { useViewerStore } from '../../../state/viewerStore'
+import { useTabStore } from '../../../state/tabStore'
 import { useTask } from '../useTask'
 import { ChoiceButton, TaskStatus } from '../ui'
 
 export function CreatePanel() {
   const inputRef = useRef<HTMLInputElement>(null)
-  const openBytes = useViewerStore((state) => state.openBytes)
+  const openBytes = useTabStore((state) => state.openInNewTab)
   const { pending, error, run } = useTask()
 
   return (
