@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { digitalSignTimestamp, markupId, stampSlug, type Markup, type NormBox } from '../../lib/pdf/markup'
+import { ESIGN_LINE_HEIGHT, esignLayout, screenWidthAt1 } from '../../lib/pdf/esignLayout'
 import { useMarkupStore } from '../../state/markupStore'
 import { useSignFieldStore } from '../../state/signFieldStore'
 import { useToolStore } from '../../state/toolStore'
@@ -417,23 +418,33 @@ export function MarkupLayer({ pageNumber, width, height }: MarkupLayerProps) {
             )
           }
           if (item.kind === 'esign') {
+            const layout = esignLayout(item.w * width, item.h * height, item.name, item.timestamp, screenWidthAt1)
+            const { signature, caption } = layout
             return frame(
               item,
               'mark-hit',
               boxStyle(item),
               'Remove signature',
               <span className="mark-esign">
-                <span className="mark-esign-left">
-                  <img className="mark-esign-img" src={item.src} alt={item.name} draggable={false} />
-                </span>
-                <span className="mark-esign-divider" />
-                <span className="mark-esign-right">
-                  <span className="mark-esign-line" style={{ fontSize: item.h * height * 0.11 }}>
-                    Digitally signed by {item.name}
-                  </span>
-                  <span className="mark-esign-line" style={{ fontSize: item.h * height * 0.11 }}>
-                    Date: {item.timestamp}
-                  </span>
+                <img
+                  className="mark-esign-img"
+                  src={item.src}
+                  alt={item.name}
+                  draggable={false}
+                  style={{ left: signature.x, top: signature.y, width: signature.w, height: signature.h }}
+                />
+                <span
+                  className="mark-esign-caption"
+                  style={{
+                    left: caption.x,
+                    top: caption.y,
+                    fontSize: caption.size,
+                    lineHeight: ESIGN_LINE_HEIGHT,
+                  }}
+                >
+                  {caption.lines.map((line, index) => (
+                    <span key={index}>{line}</span>
+                  ))}
                 </span>
               </span>,
             )

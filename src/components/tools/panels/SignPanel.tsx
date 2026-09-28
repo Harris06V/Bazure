@@ -104,15 +104,19 @@ export function SignPanel() {
     const size = 72
     const context = canvas.getContext('2d')
     if (!context) return
-    context.font = `${size}px "Segoe Script", "Brush Script MT", "Palatino Linotype", cursive`
-    const width = Math.ceil(context.measureText(name).width + 24)
+    const font = `${size}px "Segoe Script", "Brush Script MT", "Palatino Linotype", cursive`
+    context.font = font
+    const width = Math.ceil(context.measureText(name).width + 48)
     canvas.width = Math.max(width, 80)
-    canvas.height = 100
-    context.font = `${size}px "Segoe Script", "Brush Script MT", "Palatino Linotype", cursive`
+    // Extra height so script ascenders/descenders aren't clipped before cropping.
+    canvas.height = Math.ceil(size * 1.8)
+    context.font = font
     context.fillStyle = '#1B2733'
     context.textBaseline = 'middle'
-    context.fillText(name, 12, 54)
-    applyEsign(canvas.toDataURL('image/png'), canvas.width / canvas.height, name)
+    context.fillText(name, 24, canvas.height / 2)
+    const cropped = cropCanvas(canvas)
+    if (!cropped) return
+    applyEsign(cropped.src, cropped.aspect, name)
   }
 
   return (

@@ -11,6 +11,7 @@ import type { PageViewport } from 'pdfjs-dist'
 import { getActiveDocument } from './session'
 import { getRetainedDocument } from './documentSource'
 import { STAMPS, type Markup, type NormBox } from './markup'
+import { ESIGN_LINE_HEIGHT, esignLayout } from './esignLayout'
 import { useMarkupStore } from '../../state/markupStore'
 import { loadEditable } from './assemble'
 import { winAnsi } from './winansi'
@@ -231,49 +232,36 @@ async function drawItem(
   }
 
   if (item.kind !== 'esign') return
-  const box = pdfBox(viewport, item)
-  const signColor = hexRgb('#2c6fb0')
-  page.drawRectangle({
-    x: box.x,
-    y: box.y,
-    width: box.w,
-    height: box.h,
-    borderColor: signColor,
-    borderWidth: 1,
-    color: rgb(1, 1, 1),
-    opacity: 0.95,
-  })
-  const padding = 4
-  const leftW = box.w * 0.42
+  const originX = item.x * viewport.width
+  const originY = item.y * viewport.height
+  const layout = esignLayout(
+    item.w * viewport.width,
+    item.h * viewport.height,
+    item.name,
+    item.timestamp,
+    (text) => regular.widthOfTextAtSize(winAnsi(regular, text), 1),
+  )
   if (item.src) {
     const bytes = dataUrlBytes(item.src)
     const image = item.src.startsWith('data:image/jpeg') ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes)
-    const availW = leftW - padding * 2
-    const availH = box.h - padding * 2
-    const scale = Math.min(availW / image.width, availH / image.height)
+    const area = layout.signature
+    const scale = Math.min(area.w / image.width, area.h / image.height)
     const drawW = image.width * scale
     const drawH = image.height * scale
-    page.drawImage(image, {
-      x: box.x + padding + (availW - drawW) / 2,
-      y: box.y + padding + (availH - drawH) / 2,
-      width: drawW,
-      height: drawH,
+    const box = pdfBox(viewport, {
+      x: (originX + area.x) / viewport.width,
+      y: (originY + area.y + (area.h - drawH) / 2) / viewport.height,
+      w: drawW / viewport.width,
+      h: drawH / viewport.height,
     })
+    page.drawImage(image, { x: box.x, y: box.y, width: box.w, height: box.h })
   }
-  page.drawLine({
-    start: { x: box.x + leftW, y: box.y + 2 },
-    end: { x: box.x + leftW, y: box.y + box.h - 2 },
-    thickness: 1,
-    color: signColor,
+  const { caption } = layout
+  const lineStep = caption.size * ESIGN_LINE_HEIGHT
+  caption.lines.forEach((line, index) => {
+    const baseline = originY + caption.y + index * lineStep + (lineStep - caption.size) / 2 + caption.size * 0.78
+    drawUpright(page, viewport, originX + caption.x, baseline, line, caption.size, regular, ink)
   })
-  const label = winAnsi(regular, `Digitally signed by ${item.name}`)
-  const dateLine = winAnsi(regular, `Date: ${item.timestamp}`)
-  const maxWidth = item.w * (1 - 0.42) * viewport.width - 12
-  let size = Math.max(5, box.h * 0.11)
-  while (size > 4 && regular.widthOfTextAtSize(label, size) > maxWidth) size -= 0.5
-  const textXPx = (item.x + item.w * 0.42) * viewport.width + 8
-  drawUpright(page, viewport, textXPx, (item.y + item.h * 0.4) * viewport.height, label, size, regular, signColor)
-  drawUpright(page, viewport, textXPx, (item.y + item.h * 0.76) * viewport.height, dateLine, size, regular, signColor)
 
   if (item.fieldId) {
     const match = /^(\d+)R(\d*)$/.exec(item.fieldId)
