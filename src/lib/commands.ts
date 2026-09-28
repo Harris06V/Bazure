@@ -1,3 +1,4 @@
+import { baseName, isDesktop, pickAndOpen, pickSavePath, writePath } from './desktop'
 import { downloadBytes, pdfNameFrom } from './pdf/download'
 import { workingBytes } from './pdf/markupBake'
 import { useMarkupStore } from '../state/markupStore'
@@ -21,6 +22,12 @@ type SavePickerWindow = Window & {
 const saveHandles = new Map<string, WritableHandle>()
 
 export function openPicker() {
+  if (isDesktop) {
+    void pickAndOpen().catch((error: unknown) => {
+      window.alert(error instanceof Error ? error.message : 'Could not open that file.')
+    })
+    return
+  }
   document.getElementById('bazure-file')?.click()
 }
 
@@ -43,6 +50,13 @@ async function writeHandle(handle: WritableHandle, bytes: Uint8Array) {
 export async function save() {
   if (!hasDocument()) return
   const tabId = useTabStore.getState().activeId
+  if (isDesktop) {
+    const path = useTabStore.getState().tabs.find((tab) => tab.id === tabId)?.path
+    if (!path) return saveAs()
+    await writePath(path, await workingBytes())
+    markSaved(baseName(path))
+    return
+  }
   const handle = tabId ? saveHandles.get(tabId) : undefined
   const bytes = await workingBytes()
   if (handle) {
@@ -58,6 +72,16 @@ export async function save() {
 export async function saveAs() {
   if (!hasDocument()) return
   const suggested = pdfNameFrom(useViewerStore.getState().fileName ?? 'document.pdf')
+  if (isDesktop) {
+    const chosen = await pickSavePath(suggested)
+    if (!chosen) return
+    const path = /\.pdf$/i.test(chosen) ? chosen : `${chosen}.pdf`
+    await writePath(path, await workingBytes())
+    const tabId = useTabStore.getState().activeId
+    if (tabId) useTabStore.getState().setPath(tabId, path)
+    markSaved(baseName(path))
+    return
+  }
   const picker = (window as SavePickerWindow).showSaveFilePicker
   if (picker) {
     let handle: WritableHandle

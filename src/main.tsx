@@ -8,9 +8,12 @@ import './lib/pdf/setup'
 import 'pdfjs-dist/web/pdf_viewer.css'
 import './index.css'
 import App from './App.tsx'
+import { initDesktop, isDesktop } from './lib/desktop'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
+
+if (isDesktop) void initDesktop()

@@ -233,10 +233,6 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [])
 
-  function openPicker() {
-    inputRef.current?.click()
-  }
-
   return (
     <>
       <input
@@ -253,7 +249,7 @@ export default function App() {
         }}
       />
       <AppShell dragging={dragging}>
-        <DocumentStage dragging={dragging} onOpen={openPicker} />
+        <DocumentStage dragging={dragging} onOpen={openFilePicker} />
       </AppShell>
     </>
   )

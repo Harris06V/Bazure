@@ -16,6 +16,29 @@ npm run lint
 
 Requires Node 20.19+ (Vite 8).
 
+## Desktop app (Tauri)
+
+One-time prerequisites (Windows):
+
+```sh
+winget install Microsoft.VisualStudio.2022.BuildTools --override "--passive --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+winget install Rustlang.Rustup
+```
+
+Restart the terminal, then:
+
+```sh
+npm run app:dev     # desktop window with hot reload (stop any running `npm run dev` first)
+npm run app:build   # installers -> src-tauri/target/release/bundle/{nsis,msi}/
+```
+
+Desktop-only behavior:
+
+- Registers as a handler for `.pdf` ("Open with Bazure"). Opening more PDFs adds tabs to the running window.
+- Open / Save / Save as use native dialogs. Save overwrites the original file.
+- Asks before quitting with unsaved changes.
+- The webview can only read/write files you picked or opened (no blanket file system access).
+
 ## Features
 
 | Area | What it does |
@@ -64,8 +87,10 @@ src/
   hooks/                useTask, useDragReorder
   lib/
     commands.ts         save / print / clipboard / undo actions shared by menu + keys
+    desktop.ts          Tauri bridge: native dialogs, file read/write, launch files
     pdf/                pdf.js + pdf-lib helpers (open, bake markups, assemble, export)
   state/                zustand stores: viewer, tabs, markups, tools, sign fields
+src-tauri/              desktop shell: Rust entry, window/bundle config, permissions, icons
 assets/                 source logo files
 public/pdfjs/           pdf.js fonts/cmaps, copied from node_modules on dev/build (gitignored)
 ```

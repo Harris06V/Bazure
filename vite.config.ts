@@ -26,6 +26,13 @@ function copyPdfjsAssets(): Plugin {
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), copyPdfjsAssets()],
+  // Tauri expects a fixed dev port and its own log output.
+  clearScreen: false,
+  server: {
+    port: 5173,
+    strictPort: true,
+    watch: { ignored: ['**/src-tauri/**'] },
+  },
   optimizeDeps: {
     include: ['pdfjs-dist'],
   },

@@ -24,6 +24,8 @@ type TabSnapshot = {
 export type DocTab = {
   id: string
   name: string
+  /** File on disk (desktop app only); Save writes back here. */
+  path: string | null
   dirty: boolean
   snapshot: TabSnapshot | null
 }
@@ -32,7 +34,8 @@ type TabState = {
   tabs: DocTab[]
   activeId: string | null
   openFiles: (files: File[]) => Promise<void>
-  openInNewTab: (name: string, bytes: Uint8Array) => Promise<void>
+  openInNewTab: (name: string, bytes: Uint8Array, options?: { modified?: boolean; path?: string }) => Promise<string>
+  setPath: (id: string, path: string) => void
   switchTo: (id: string) => Promise<void>
   close: (id: string) => Promise<boolean>
   closeAll: () => Promise<boolean>
@@ -136,20 +139,21 @@ export const useTabStore = create<TabState>((set, get) => {
     )
   }
 
-  function startTab(name: string, open: () => void) {
+  function startTab(name: string, open: () => void, path: string | null = null) {
     return serial(async () => {
       let id = get().activeId
       if (id && activeIsBlank()) {
         const reuse = id
-        set((state) => ({ tabs: state.tabs.map((tab) => (tab.id === reuse ? { ...tab, name } : tab)) }))
+        set((state) => ({ tabs: state.tabs.map((tab) => (tab.id === reuse ? { ...tab, name, path } : tab)) }))
       } else {
         await parkActive()
         id = crypto.randomUUID()
-        const tab: DocTab = { id, name, dirty: false, snapshot: null }
+        const tab: DocTab = { id, name, path, dirty: false, snapshot: null }
         set((state) => ({ tabs: [...state.tabs, tab], activeId: tab.id }))
       }
       useToolStore.getState().close()
       open()
+      return id
     })
   }
 
@@ -169,9 +173,15 @@ export const useTabStore = create<TabState>((set, get) => {
       }
     },
 
-    openInNewTab: async (name, bytes) => {
-      await startTab(name, () => void useViewerStore.getState().openBytes(name, bytes))
-    },
+    openInNewTab: (name, bytes, options) =>
+      startTab(
+        name,
+        () => void useViewerStore.getState().openBytes(name, bytes, { modified: options?.modified }),
+        options?.path ?? null,
+      ),
+
+    setPath: (id, path) =>
+      set((state) => ({ tabs: state.tabs.map((tab) => (tab.id === id ? { ...tab, path } : tab)) })),
 
     switchTo: (id) =>
       serial(async () => {
