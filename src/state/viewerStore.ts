@@ -10,7 +10,7 @@ import {
 import { destroyActiveDocument, setActiveDocument } from '../lib/pdf/session'
 import type { PageSize, ReadingMode, ZoomMode } from '../lib/pdf/types'
 import { clampZoom, ZOOM_STEP } from '../lib/zoom'
-import { releaseRetainedDocument, retainBytes } from '../services/documentSource'
+import { releaseRetainedDocument, retainBytes } from '../lib/pdf/documentSource'
 import { useMarkupStore } from './markupStore'
 import { useSignFieldStore } from './signFieldStore'
 import { useToolStore } from './toolStore'

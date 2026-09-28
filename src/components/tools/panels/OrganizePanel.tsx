@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { AnnotationMode } from 'pdfjs-dist'
+import { useDragReorder } from '../../../hooks/useDragReorder'
 import { rebuildPages, type PageOp } from '../../../lib/pdf/assemble'
 import { downloadBytes, pdfNameFrom } from '../../../lib/pdf/download'
 import { workingBytes } from '../../../lib/pdf/markupBake'
 import { getActiveDocument } from '../../../lib/pdf/session'
 import { useViewerStore } from '../../../state/viewerStore'
-import { useTask } from '../useTask'
+import { useTask } from '../../../hooks/useTask'
 import { ChoiceButton, NeedsPdf, TaskStatus } from '../ui'
 
 function identity(count: number): PageOp[] {
@@ -29,6 +30,7 @@ export function OrganizePanel() {
   const [numberPages, setNumberPages] = useState(false)
   const [thumbs, setThumbs] = useState<Record<number, string>>({})
   const { pending, error, run } = useTask()
+  const drag = useDragReorder(items, setItems)
 
   if (synced !== signature) {
     setSynced(signature)
@@ -89,52 +91,47 @@ export function OrganizePanel() {
 
   return (
     <NeedsPdf>
-      <p className="panel-note">Select pages, then rotate, reorder, or remove them.</p>
-      <div className="org-grid">
-        {items.map((item, index) => (
-          <button
-            key={item.id}
-            type="button"
-            className={selected.includes(item.id) ? 'org-card is-selected' : 'org-card'}
-            draggable
-            onDragStart={(event) => event.dataTransfer.setData('text/plain', item.id)}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault()
-              const id = event.dataTransfer.getData('text/plain')
-              if (!id || id === item.id) return
-              setItems((current) => {
-                const from = current.findIndex((entry) => entry.id === id)
-                const to = current.findIndex((entry) => entry.id === item.id)
-                if (from < 0 || to < 0) return current
-                const copy = current.slice()
-                const [moved] = copy.splice(from, 1)
-                copy.splice(to, 0, moved)
-                return copy
-              })
-            }}
-            onClick={() => {
-              setSelected((current) =>
-                current.includes(item.id) ? current.filter((id) => id !== item.id) : [...current, item.id],
-              )
-              if (typeof item.source === 'number') goToPage(item.source + 1)
-            }}
-          >
-            {typeof item.source === 'number' && thumbs[item.source] ? (
-              <img
-                src={thumbs[item.source]}
-                alt=""
-                style={{ transform: `rotate(${item.rotation}deg)` }}
-              />
-            ) : (
-              <span className="org-blank">Blank</span>
-            )}
-            <span>
-              {index + 1}
-              {item.rotation ? ` · ${item.rotation}°` : ''}
-            </span>
-          </button>
-        ))}
+      <p className="panel-note">Drag pages to reorder them. Click to select, then rotate, duplicate, or remove.</p>
+      <div className="org-grid" {...drag.containerProps}>
+        {items.map((item, index) => {
+          const marker = drag.markerFor(index)
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={[
+                'org-card',
+                selected.includes(item.id) ? 'is-selected' : '',
+                drag.draggingId === item.id ? 'is-dragging' : '',
+                marker ? `drop-${marker}` : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              {...drag.itemProps(item.id)}
+              onClick={() => {
+                setSelected((current) =>
+                  current.includes(item.id) ? current.filter((id) => id !== item.id) : [...current, item.id],
+                )
+                if (typeof item.source === 'number') goToPage(item.source + 1)
+              }}
+            >
+              {typeof item.source === 'number' && thumbs[item.source] ? (
+                <img
+                  src={thumbs[item.source]}
+                  alt=""
+                  draggable={false}
+                  style={{ transform: `rotate(${item.rotation}deg)` }}
+                />
+              ) : (
+                <span className="org-blank">Blank</span>
+              )}
+              <span>
+                {index + 1}
+                {item.rotation ? ` · ${item.rotation}°` : ''}
+              </span>
+            </button>
+          )
+        })}
       </div>
       <div className="pair-row">
         <ChoiceButton disabled={chosen.length === 0} onClick={() => rotate(-90)}>

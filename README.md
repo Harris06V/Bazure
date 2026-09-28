@@ -1,32 +1,73 @@
-# React + TypeScript + Vite
+<img src="assets/bazure-icon.svg" width="64" alt="Bazure">
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+# Bazure
 
-Currently, two official plugins are available:
+Browser-based PDF editor. Runs fully client-side; files never leave the machine.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # typecheck + production build -> dist/
+npm run preview  # serve dist/
+npm run lint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Requires Node 20.19+ (Vite 8).
+
+## Features
+
+| Area | What it does |
+| --- | --- |
+| Tabs | Multiple PDFs open at once. Drag to reorder, middle-click to close. Unsaved dot per tab. |
+| Menu (top-left) | Open, Create, Save, Save as, Print, Undo/Redo, Cut/Copy/Paste, zoom/view, close tabs. |
+| Select | Click to select, drag to move, corner handles to resize. Double-click text to edit. |
+| Comment | Highlight, underline, strikethrough selected text. Sticky notes. |
+| Edit | Add text, place images, white-out regions (visual cover, not true redaction). |
+| Stamp | Approved, Draft, Confidential, Sign here, etc. |
+| Fill & Sign | Fill form fields. Draw/type/upload a signature. Adds "Digitally signed by … / Date" block. Detects empty signature fields and prompts to sign them. |
+| Pages | Drag thumbnails to reorder. Rotate, duplicate, delete, insert blank, page numbers, extract. |
+| Create / Combine | Build a PDF from Word, Excel, PowerPoint, images, or other PDFs (Create is in the menu). Result opens in a new tab. |
+| Export | PDF, PNG/JPEG per page or all pages (zip), plain text. |
+| Compress | Shrink file size. |
+
+The signature block is a visual stamp, not a cryptographic (PKI) signature.
+
+## Shortcuts
+
+| Keys | Action |
+| --- | --- |
+| Ctrl+O / S / Shift+S / P | Open / Save / Save as / Print |
+| Ctrl+Z / Y | Undo / Redo (markups) |
+| Ctrl+C / X / V / D | Copy / Cut / Paste / Duplicate selected item |
+| Del | Delete selected item |
+| Arrows | Nudge selected item (Shift = larger step); otherwise change page |
+| Ctrl + / - / 0 | Zoom in / out / 100% |
+| Ctrl+L | Full screen |
+| Ctrl+Shift+←/→ | Move focused tab |
+| Esc | Cancel placement / deselect |
+
+## Stack
+
+React 19, TypeScript, Vite, Zustand, Tailwind 4, pdf.js (render), pdf-lib (write), mammoth + fflate + utif (import).
+
+## Layout
+
+```
+src/
+  App.tsx               global shortcuts, file open, drag-drop
+  components/
+    shell/              toolbar, menu, tab bar
+    tools/              tool rail, side panel, one file per tool in panels/
+    viewer/             page rendering, markup overlay, signature fields
+  hooks/                useTask, useDragReorder
+  lib/
+    commands.ts         save / print / clipboard / undo actions shared by menu + keys
+    pdf/                pdf.js + pdf-lib helpers (open, bake markups, assemble, export)
+  state/                zustand stores: viewer, tabs, markups, tools, sign fields
+assets/                 source logo files
+public/pdfjs/           pdf.js fonts/cmaps, copied from node_modules on dev/build (gitignored)
+```
+
+Markups live in `state/markupStore` as normalized page coordinates (0–1) and are only written into the PDF on save/export (`lib/pdf/markupBake.ts`).

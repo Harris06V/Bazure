@@ -5,7 +5,7 @@ import { useMarkupStore } from '../../../state/markupStore'
 import { useSignFieldStore } from '../../../state/signFieldStore'
 import { useToolStore } from '../../../state/toolStore'
 import { useViewerStore } from '../../../state/viewerStore'
-import { useTask } from '../useTask'
+import { useTask } from '../../../hooks/useTask'
 import { ChoiceButton, MarkupList, NeedsPdf, TaskStatus } from '../ui'
 
 function cropCanvas(canvas: HTMLCanvasElement) {

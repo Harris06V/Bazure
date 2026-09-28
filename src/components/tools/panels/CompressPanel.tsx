@@ -3,9 +3,9 @@ import { formatBytes } from '../../../lib/pdf/download'
 import { loadEditable } from '../../../lib/pdf/assemble'
 import { workingBytes } from '../../../lib/pdf/markupBake'
 import { rasterizeDocument } from '../../../lib/pdf/pageImage'
-import { getRetainedDocument } from '../../../services/documentSource'
+import { getRetainedDocument } from '../../../lib/pdf/documentSource'
 import { useViewerStore } from '../../../state/viewerStore'
-import { useTask } from '../useTask'
+import { useTask } from '../../../hooks/useTask'
 import { ChoiceButton, NeedsPdf, TaskStatus } from '../ui'
 
 export function CompressPanel() {

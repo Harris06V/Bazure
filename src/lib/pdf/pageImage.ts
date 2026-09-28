@@ -1,7 +1,7 @@
 import { AnnotationMode, getDocument, type PDFDocumentProxy } from 'pdfjs-dist'
 import { zipSync } from 'fflate'
 import { useMarkupStore } from '../../state/markupStore'
-import { getRetainedDocument } from '../../services/documentSource'
+import { getRetainedDocument } from './documentSource'
 import { workingBytes } from './markupBake'
 import { getActiveDocument } from './session'
 import { pdfAsset } from './setup'
@@ -24,8 +24,8 @@ async function requireDocument() {
   return doc
 }
 
-async function withDocument<T>(use: (doc: PDFDocumentProxy) => Promise<T>) {
-  if (useMarkupStore.getState().items.length === 0) return use(await requireDocument())
+async function withDocument<T>(work: (doc: PDFDocumentProxy) => Promise<T>) {
+  if (useMarkupStore.getState().items.length === 0) return work(await requireDocument())
   const bytes = await workingBytes()
   const task = getDocument({
     data: bytes.slice(),
@@ -37,7 +37,7 @@ async function withDocument<T>(use: (doc: PDFDocumentProxy) => Promise<T>) {
     enableXfa: true,
   })
   try {
-    return await use(await task.promise)
+    return await work(await task.promise)
   } finally {
     await task.destroy()
   }

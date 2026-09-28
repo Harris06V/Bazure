@@ -822,6 +822,52 @@ textarea {
   color: var(--color-ink);
 }
 
+.org-card,
+.doc-tab {
+  position: relative;
+  user-select: none;
+}
+
+.org-card {
+  cursor: grab;
+}
+
+.org-card.is-dragging,
+.doc-tab.is-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.org-card.drop-before::before,
+.org-card.drop-after::after,
+.doc-tab.drop-before::before,
+.doc-tab.drop-after::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  pointer-events: none;
+}
+
+.org-card.drop-before::before {
+  left: -6px;
+}
+
+.org-card.drop-after::after {
+  right: -6px;
+}
+
+.doc-tab.drop-before::before {
+  left: -3px;
+}
+
+.doc-tab.drop-after::after {
+  right: -3px;
+}
+
 .org-card img,
 .org-blank {
   display: flex;

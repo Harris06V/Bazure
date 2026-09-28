@@ -9,7 +9,7 @@ import {
 } from 'pdf-lib'
 import type { PageViewport } from 'pdfjs-dist'
 import { getActiveDocument } from './session'
-import { getRetainedDocument } from '../../services/documentSource'
+import { getRetainedDocument } from './documentSource'
 import { STAMPS, type Markup, type NormBox } from './markup'
 import { useMarkupStore } from '../../state/markupStore'
 import { loadEditable } from './assemble'

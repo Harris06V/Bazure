@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { Markup } from '../lib/pdf/markup'
 import { getActiveDocument } from '../lib/pdf/session'
 import type { ReadingMode, ZoomMode } from '../lib/pdf/types'
-import { getRetainedDocument } from '../services/documentSource'
+import { getRetainedDocument } from '../lib/pdf/documentSource'
 import { useMarkupStore } from './markupStore'
 import { useSignFieldStore } from './signFieldStore'
 import { useToolStore } from './toolStore'
@@ -36,6 +36,7 @@ type TabState = {
   switchTo: (id: string) => Promise<void>
   close: (id: string) => Promise<boolean>
   closeAll: () => Promise<boolean>
+  reorder: (ids: string[]) => void
 }
 
 export function isActiveDirty() {
@@ -223,6 +224,13 @@ export const useTabStore = create<TabState>((set, get) => {
         set({ tabs: [], activeId: null })
         useViewerStore.getState().closeDocument()
         return true
+      }),
+
+    reorder: (ids) =>
+      set((state) => {
+        const byId = new Map(state.tabs.map((tab) => [tab.id, tab]))
+        const next = ids.flatMap((id) => byId.get(id) ?? [])
+        return next.length === state.tabs.length ? { tabs: next } : state
       }),
   }
 })

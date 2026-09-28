@@ -2,7 +2,7 @@ import { STAMPS } from '../../../lib/pdf/markup'
 import { workingBytes } from '../../../lib/pdf/markupBake'
 import { useToolStore } from '../../../state/toolStore'
 import { useViewerStore } from '../../../state/viewerStore'
-import { useTask } from '../useTask'
+import { useTask } from '../../../hooks/useTask'
 import { MarkupList, NeedsPdf, TaskStatus } from '../ui'
 
 export function StampPanel() {

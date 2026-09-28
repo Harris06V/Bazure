@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { blankPdf, buildPdf } from '../../../lib/pdf/assemble'
 import { pdfNameFrom } from '../../../lib/pdf/download'
 import { useTabStore } from '../../../state/tabStore'
-import { useTask } from '../useTask'
+import { useTask } from '../../../hooks/useTask'
 import { ChoiceButton, TaskStatus } from '../ui'
 
 export function CreatePanel() {

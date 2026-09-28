@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { buildPdf } from '../../../lib/pdf/assemble'
 import { isImageName } from '../../../lib/pdf/images'
 import { useTabStore } from '../../../state/tabStore'
-import { useTask } from '../useTask'
+import { useTask } from '../../../hooks/useTask'
 import { ChoiceButton, TaskStatus } from '../ui'
 
 type Piece = { id: string; file: File }
