@@ -9,7 +9,7 @@ const tools: { id: ToolId; label: string }[] = [
   { id: 'stamp', label: 'Stamp' },
   { id: 'sign', label: 'Sign' },
   { id: 'organize', label: 'Pages' },
-  { id: 'combine', label: 'Combine' },
+  { id: 'combine', label: 'Merge' },
   { id: 'export', label: 'Export' },
   { id: 'compress', label: 'Compress' },
   { id: 'share', label: 'Share' },

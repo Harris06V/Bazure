@@ -21,7 +21,7 @@ const titles: Record<ToolId, string> = {
   stamp: 'Stamp',
   sign: 'Fill & Sign',
   organize: 'Organize pages',
-  combine: 'Combine files',
+  combine: 'Merge files',
   export: 'Export',
   compress: 'Compress',
   share: 'Share',

@@ -34,6 +34,27 @@ export async function pickAndOpen() {
   await openPaths(Array.isArray(picked) ? picked : [picked])
 }
 
+const MERGE_FILTER = [
+  {
+    name: 'PDF and images',
+    extensions: ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'tif', 'tiff'],
+  },
+]
+
+/** Native multi-select. Returns null if the dialog is cancelled. */
+export async function pickMergeSources() {
+  const { open } = await import('@tauri-apps/plugin-dialog')
+  const { readFile } = await import('@tauri-apps/plugin-fs')
+  const picked = await open({ multiple: true, directory: false, filters: MERGE_FILTER })
+  if (!picked) return null
+  const paths = Array.isArray(picked) ? picked : [picked]
+  const sources: { name: string; bytes: Uint8Array }[] = []
+  for (const path of paths) {
+    sources.push({ name: baseName(path), bytes: await readFile(path) })
+  }
+  return sources
+}
+
 /** Native Save dialog. Returns the chosen path, or null if cancelled. */
 export async function pickSavePath(suggestedName: string) {
   const { save } = await import('@tauri-apps/plugin-dialog')

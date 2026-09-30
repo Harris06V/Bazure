@@ -17,6 +17,7 @@ import {
 } from '../../lib/commands'
 import { useMarkupStore } from '../../state/markupStore'
 import { useTabStore } from '../../state/tabStore'
+import { applyTheme, currentTheme, type ThemeName } from '../../lib/theme'
 import { useViewerStore, ZOOM_STEP } from '../../state/viewerStore'
 
 type MenuEntry =
@@ -27,6 +28,7 @@ const mod = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator
 
 export function AppMenu() {
   const [open, setOpen] = useState(false)
+  const [theme, setTheme] = useState<ThemeName>(() => currentTheme())
   const rootRef = useRef<HTMLDivElement>(null)
   const ready = useViewerStore((state) => state.status === 'ready')
   const readingMode = useViewerStore((state) => state.readingMode)
@@ -83,6 +85,15 @@ export function AppMenu() {
       run: () => viewer.setReadingMode(readingMode === 'continuous' ? 'single' : 'continuous'),
     },
     { kind: 'item', label: 'Full screen', shortcut: `${mod}L`, run: toggleFullScreen },
+    {
+      kind: 'item',
+      label: theme === 'dark' ? 'Use light mode' : 'Use dark mode',
+      run: () => {
+        const next = theme === 'dark' ? 'light' : 'dark'
+        applyTheme(next)
+        setTheme(next)
+      },
+    },
     { kind: 'separator' },
     { kind: 'item', label: 'Close tab', disabled: tabCount === 0, run: closeActiveTab },
     { kind: 'item', label: 'Close all tabs', disabled: tabCount === 0, run: closeAll },
