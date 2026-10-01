@@ -4,6 +4,14 @@
 
 Browser-based PDF editor. Runs fully client-side; files never leave the machine.
 
+## Download
+
+**[Get the Windows installer from the latest release](https://github.com/Harris06V/Bazure/releases/latest)**: download `Bazure_<version>_x64-setup.exe` and run it. No admin rights needed.
+
+The installer isn't code-signed, so Windows SmartScreen may warn on first run. Click **More info**, then **Run anyway**.
+
+Everything below is for building from source.
+
 ## Run
 
 ```sh
@@ -31,6 +39,8 @@ Restart the terminal, then:
 npm run app:dev     # desktop window with hot reload (stop any running `npm run dev` first)
 npm run app:build   # installers -> src-tauri/target/release/bundle/{nsis,msi}/
 ```
+
+Releases: bump `version` in `package.json`, `src-tauri/tauri.conf.json`, and `src-tauri/Cargo.toml`, then push a matching tag (`git tag v0.1.1 && git push --tags`). The `Release` workflow builds the installers on GitHub and attaches them to a release.
 
 Desktop-only behavior:
 
@@ -71,6 +81,10 @@ The signature block is a visual stamp, not a cryptographic (PKI) signature.
 | Ctrl+Shift+←/→ | Move focused tab |
 | Esc | Cancel placement / deselect |
 
+## License
+
+[MIT](LICENSE)
+
 ## Stack
 
 React 19, TypeScript, Vite, Zustand, Tailwind 4, pdf.js (render), pdf-lib (write), mammoth + fflate + utif (import).
@@ -92,6 +106,7 @@ src/
   state/                zustand stores: viewer, tabs, markups, tools, sign fields
 src-tauri/              desktop shell: Rust entry, window/bundle config, permissions, icons
 assets/                 source logo files
+.github/workflows/      release.yml: builds Windows installers on version tags
 public/pdfjs/           pdf.js fonts/cmaps, copied from node_modules on dev/build (gitignored)
 ```
 
