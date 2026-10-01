@@ -29,7 +29,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
+    "targets": "all",
     "publisher": "Bazure",
     "shortDescription": "PDF editor",
     "category": "Productivity",

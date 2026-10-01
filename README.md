@@ -6,9 +6,15 @@ Browser-based PDF editor. Runs fully client-side; files never leave the machine.
 
 ## Download
 
-**[Get the Windows installer from the latest release](https://github.com/Harris06V/Bazure/releases/latest)**: download `Bazure_<version>_x64-setup.exe` and run it. No admin rights needed.
+**[Get the latest release](https://github.com/Harris06V/Bazure/releases/latest)**
 
-The installer isn't code-signed, so Windows SmartScreen may warn on first run. Click **More info**, then **Run anyway**.
+- **Windows:** download `Bazure_<version>_x64-setup.exe` and run it. No admin rights needed.
+- **macOS:** download `Bazure_<version>_universal.dmg` (Apple Silicon and Intel) and drag Bazure to Applications.
+
+The installers aren't code-signed, so the first launch shows a warning:
+
+- **Windows:** SmartScreen says "Windows protected your PC". Click **More info**, then **Run anyway**.
+- **macOS:** Gatekeeper says the app can't be opened. Go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**. If macOS says the app is "damaged", run `xattr -cr /Applications/Bazure.app` in Terminal.
 
 Everything below is for building from source.
 
@@ -106,7 +112,7 @@ src/
   state/                zustand stores: viewer, tabs, markups, tools, sign fields
 src-tauri/              desktop shell: Rust entry, window/bundle config, permissions, icons
 assets/                 source logo files
-.github/workflows/      release.yml: builds Windows installers on version tags
+.github/workflows/      release.yml: builds Windows + macOS installers on version tags
 public/pdfjs/           pdf.js fonts/cmaps, copied from node_modules on dev/build (gitignored)
 ```
 
