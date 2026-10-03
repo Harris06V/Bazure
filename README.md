@@ -2,7 +2,7 @@
 
 # Bazure
 
-Browser-based PDF editor. Runs fully client-side; files never leave the machine.
+Browser based PDF editor. Runs fully client side, files never leave the machine. Has features such as E-Sign, merge, commenting, convert file types, etc.
 
 ## Download
 
